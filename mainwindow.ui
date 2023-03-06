@@ -626,10 +626,8 @@
      <string>Сортировки</string>
     </property>
     <addaction name="open_from_txt"/>
-    <addaction name="open_from_binary"/>
     <addaction name="separator"/>
     <addaction name="save_to_txt"/>
-    <addaction name="save_to_binary"/>
    </widget>
    <addaction name="menu"/>
   </widget>

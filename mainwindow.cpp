@@ -536,7 +536,7 @@ void MainWindow::search_function(int func, QString value)
         int count = 0;
         QString result = "";
 
-        if (func == 1)
+        if (func == 1) //линейный поиск
         {
             int size = this->size;
             for (int i = 0; i < size; i++)
@@ -546,11 +546,12 @@ void MainWindow::search_function(int func, QString value)
                     ui->tableWidget->item(0, i)->setBackground(Qt::green);
                     result += QString::number(i + 1) + " ";
                     count += 1;
+                    index = i;
                 }
             }
 
         }
-        else if (func == 2)
+        else if (func == 2) //бинарный поиск
         {
             if (is_sorted(this->size, this->array))
             {
@@ -584,7 +585,7 @@ void MainWindow::search_function(int func, QString value)
                 return;
             }
         }
-        else
+        else //авто поиск
         {
             if (is_sorted(this->size, this->array))
             {
@@ -621,6 +622,7 @@ void MainWindow::search_function(int func, QString value)
                         count += 1;
                         ui->tableWidget->item(0, i)->setBackground(Qt::green);
                         result += QString::number(i + 1) + " ";
+                        index = i;
                     }
                 }
             }
@@ -632,6 +634,7 @@ void MainWindow::search_function(int func, QString value)
         }
         else
         {
+            ui->tableWidget->scrollToItem(ui->tableWidget->item(0, index));
             result = "Найдено значений: " + QString::number(count) + "\nНомера колонок: " + result;
             QMessageBox::information(this, "Результат операции", result);
         }
@@ -1032,6 +1035,7 @@ bool MainWindow::check_numbers_file(QFile *file)
 
 void MainWindow::on_open_from_txt_triggered()
 {
+    //получаем путь для открытия файла
     QString path;
     path = QFileDialog::getOpenFileName(this, tr("Считать из txt"), QDir::currentPath(), tr("Text files (*.txt)"));
     if (path.isEmpty())
@@ -1040,46 +1044,75 @@ void MainWindow::on_open_from_txt_triggered()
     }
     else
     {
-        QFile *file = new QFile;
-        file->setFileName(path);
-        file->open(QIODevice::ReadOnly);
-        if (not file->isOpen())
+        QFile file;
+        file.setFileName(path);
+        file.open(QIODevice::ReadOnly);
+        if (not file.isOpen())
         {
             QMessageBox::information(this, "Программа", "Не удалось открыть файл, возможно нехватка прав доступа");
-            delete file;
             return;
         }
         else
         {
-            QString buffer;
-            QByteArray byteArray;
-            bool isInt;
-            buffer = file->readLine();
+            //файл открыт, начинаем считывание
+            QString buffer; //буфер для считывания
+            bool isInt; //является ли буферный элемент числом
+            //считываем размер таблицы
+            buffer = file.readLine();
             buffer.remove("\n");
-            int size = buffer.toInt(&isInt);
-            if (not isInt)
+            int fromFileSize = buffer.toInt(&isInt);
+            if (not isInt) //если размер не валиден
             {
                 QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer);
-                delete file;
                 return;
             }
-            else{
-                this->setTable(size);
-                ui->tableWidget->setUpdatesEnabled(false);
-                for (int i = 0; i < size; i++)
+            else if (fromFileSize <= 0 or fromFileSize >= this->MAX_ARRAY_SIZE)
+            {
+                QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer + " , размер таблицы должен быть в диапазоне [1, " + QString::number(this->MAX_ARRAY_SIZE) + "]");
+                return;
+            }
+            else
+            {
+                //создаём времменный массив для считанных чисел
+                int *fromFileArray = new int[fromFileSize];
+                for (int i = 0; i < fromFileSize; i++)
                 {
-                    buffer = file->readLine();
+                    //построчно записываем данные в массив
+                    buffer = file.readLine();
                     buffer.remove("\n");
-                    int size = buffer.toInt(&isInt);
-                    if (not isInt)
+                    fromFileArray[i] = buffer.toInt(&isInt);
+                    if (not isInt) //буферный элемент не валиден
                     {
-                        QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer);
+                        QMessageBox::information(
+                                    this, \
+                                    "Программа", \
+                                    QString("Ошибка, файл повреждён в строке ") + \
+                                    QString::number(i + 2) + \
+                                    ": " + buffer + "\n" + \
+                                    "Считано элементов:" + QString::number(i) + \
+                                    "Необходимо считать: " + QString::number(fromFileSize)
+                        );
+                        delete [] fromFileArray;
                         return;
                     }
-                    ui->tableWidget->item(0, i)->setText()
                 }
+                //если все элементы валидны, то заменяем основной массив на временный (с числами) + подтягиваем переменную size и перерисовываем таблицу
+                ui->tableWidget->setUpdatesEnabled(false);
+                this->setTable(fromFileSize);
+                for (int i = 0; i < fromFileSize; i++)
+                {
+                    ui->tableWidget->item(0, i)->setText(QString::number(fromFileArray[i]));
+                    ui->tableWidget->item(0, i)->setBackground(Qt::white);
+                }
+                ui->tableWidget->setUpdatesEnabled(true);
+                ui->tableWidget->repaint();
+                delete [] this->array;
+                this->array = fromFileArray;
+                this->size = fromFileSize;
             }
         }
+        this->clearTableConnectedLabels();
+        this->clear_counters();
     }
 }
 
