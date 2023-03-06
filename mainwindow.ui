@@ -628,6 +628,8 @@
     <addaction name="open_from_txt"/>
     <addaction name="separator"/>
     <addaction name="save_to_txt"/>
+    <addaction name="save_to_scv"/>
+    <addaction name="open_from_csv"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -658,6 +660,16 @@
   <action name="save_to_binary">
    <property name="text">
     <string>Сохранить бинарник</string>
+   </property>
+  </action>
+  <action name="save_to_scv">
+   <property name="text">
+    <string>Сохранить в .csv</string>
+   </property>
+  </action>
+  <action name="open_from_csv">
+   <property name="text">
+    <string>Открыть .csv</string>
    </property>
   </action>
  </widget>

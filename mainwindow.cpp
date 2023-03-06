@@ -295,21 +295,13 @@ void MainWindow::testRemoveDuplicatesTable()
 
 void MainWindow::clearTable()
 {
-
-    cout << this->array << endl;
-    cout << this->size << endl;
-
     if (this->check()){
-        delete [] array;
-        array = new int [size];
         memset(this->array, 0, this->size * sizeof (int));
 
         for (int i = 0; i < this->size; i++)
         {
             array[i] = 1;
-            cout << this->array[i] << " ";
         }
-        cout << endl;
         if (ui->tableWidget->item(0, 0) != nullptr)
         {
             QTableWidgetItem *item;
@@ -370,7 +362,7 @@ void MainWindow::setArrayNumber(int number)
     }
     else
     {
-        cout << this->size << " " << bool(this->array == nullptr) << " " << bool(ui->tableWidget->item(0, 0) == nullptr);
+//        cout << this->size << " " << bool(this->array == nullptr) << " " << bool(ui->tableWidget->item(0, 0) == nullptr);
         QMessageBox::information(this, "Ошибка", "Таблица не установлена");
     }
     this->clearTableConnectedLabels();
@@ -432,7 +424,7 @@ void MainWindow::on_pushButton_set_size_random_clicked()
         QTableWidgetItem *table_item;
         srand(clock());
 
-
+        ui->tableWidget->setUpdatesEnabled(false);
         for (int i = 0; i < this->size; i++)
         {
             value = rand() % 201 - 100;
@@ -440,11 +432,11 @@ void MainWindow::on_pushButton_set_size_random_clicked()
             table_item = ui->tableWidget->item(0, i);
             if (table_item != nullptr)
             {
-                ui->tableWidget->item(0, i)->setText(QString::number(value));
-                ui->tableWidget->item(0, i)->setBackground(Qt::white);
+                table_item->setText(QString::number(value));
+                table_item->setBackground(Qt::white);
             }
         }
-
+        ui->tableWidget->setUpdatesEnabled(true);
         ui->tableWidget->scrollToItem(ui->tableWidget->item(0, 0));
     }
     this->clearTableConnectedLabels();
@@ -694,8 +686,8 @@ void MainWindow::on_tableWidget_itemChanged(QTableWidgetItem *item)
     else {
         if ( is_int)
         {
-            cout << "replaced item with column: " << item->column() << endl;
-            cout << "prev " << this->array[item->column()] << " " << "next " << number << endl;
+//            cout << "replaced item with column: " << item->column() << endl;
+//            cout << "prev " << this->array[item->column()] << " " << "next " << number << endl;
             this->array[item->column()] = number;
         }
     }
@@ -747,19 +739,7 @@ void MainWindow::on_tableWidget_itemClicked(QTableWidgetItem *item)
 
 void MainWindow::on_pushButton_clear_clicked()
 {
-    cout << "before func call" << endl;
-    for (int i = 0; i < this->size; i++)
-    {
-        cout << this->array[i] << " ";
-    }
-    cout << endl;
     this->clearTable();
-    for (int i = 0; i < this->size; i++)
-    {
-        cout << this->array[i] << " ";
-    }
-    cout << endl;
-
 }
 
 
@@ -898,7 +878,7 @@ void MainWindow::on_tableWidget_itemSelectionChanged()
     }
     catch (int error) {
         //увы, но выделили бяку
-        cout << "error, " << error << endl;
+//        cout << "error, " << error << endl;
         ui->label_selected_avg->clear();
         ui->label_selected_min->clear();
         ui->label_selected_max->clear();
@@ -920,7 +900,7 @@ void MainWindow::on_tableWidget_itemSelectionChanged()
     }
     if ((this->selectedArray != nullptr) && this->selectedArraySize > 0)
     {
-        cout << "ok, " << this->selectedArraySize << endl;
+//        cout << "ok, " << this->selectedArraySize << endl;
         double average = avg(this->selectedArraySize, this->selectedArray);
         int minimum = min(this->selectedArraySize, this->selectedArray);
         int maximum = max(this->selectedArraySize, this->selectedArray);
@@ -946,7 +926,7 @@ void MainWindow::on_tableWidget_itemSelectionChanged()
     }
     else
     {
-        cout << "trouble, " << (this->selectedArray == nullptr) << " " << (this->selectedArraySize) << endl;
+//        cout << "trouble, " << (this->selectedArray == nullptr) << " " << (this->selectedArraySize) << endl;
         ui->label_selected_avg->clear();
         ui->label_selected_min->clear();
         ui->label_selected_max->clear();
@@ -1066,7 +1046,7 @@ void MainWindow::on_open_from_txt_triggered()
                 QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer);
                 return;
             }
-            else if (fromFileSize <= 0 or fromFileSize >= this->MAX_ARRAY_SIZE)
+            else if (fromFileSize <= 0 or fromFileSize > this->MAX_ARRAY_SIZE)
             {
                 QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer + " , размер таблицы должен быть в диапазоне [1, " + QString::number(this->MAX_ARRAY_SIZE) + "]");
                 return;
@@ -1090,7 +1070,151 @@ void MainWindow::on_open_from_txt_triggered()
                                     QString::number(i + 2) + \
                                     ": " + buffer + "\n" + \
                                     "Считано элементов:" + QString::number(i) + \
-                                    "Необходимо считать: " + QString::number(fromFileSize)
+                                    " Необходимо считать: " + QString::number(fromFileSize)
+                        );
+                        delete [] fromFileArray;
+                        return;
+                    }
+                }
+                //если все элементы валидны, то заменяем основной массив на временный (с числами) + подтягиваем переменную size и перерисовываем таблицу
+                ui->tableWidget->setUpdatesEnabled(false);
+                this->setTable(fromFileSize);
+                for (int i = 0; i < fromFileSize; i++)
+                {
+                    ui->tableWidget->item(0, i)->setText(QString::number(fromFileArray[i]));
+                    ui->tableWidget->item(0, i)->setBackground(Qt::white);
+                }
+                ui->tableWidget->setUpdatesEnabled(true);
+                ui->tableWidget->repaint();
+                delete [] this->array;
+                this->array = fromFileArray;
+                this->size = fromFileSize;
+            }
+        }
+        this->clearTableConnectedLabels();
+        this->clear_counters();
+    }
+}
+
+
+void MainWindow::on_save_to_scv_triggered()
+{
+    if (this->check() && this->check_numbers())
+    {
+        QString path;
+        path = QFileDialog::getSaveFileName(this, tr("Сохранить как"), QDir::currentPath(), tr("Text files (*.txt)"));
+
+        if (path.isEmpty())
+        {
+            QMessageBox::information(this, "Программа", "Ошибка, путь для сохранения файла не выбран");
+        }
+        else
+        {
+            QFile file;
+            file.setFileName(path);
+            file.open(QIODevice::WriteOnly);
+            if (not file.isOpen())
+            {
+                QMessageBox::information(this, "Программа", "Ошибка, файл сохранить не удалось, возможно нехватка прав доступа");
+                return;
+            }
+
+            QString buffer;
+            buffer.setNum(this->size);
+            buffer += ";";
+            file.write(buffer.toUtf8());
+
+            int size_minus_one = this->size - 1;
+
+            for (int i = 0; i < size_minus_one; i++)
+            {
+                buffer.setNum(this->array[i]);
+                buffer += ",";
+                file.write(buffer.toUtf8());
+            }
+            buffer.setNum(this->array[size - 1]);
+            file.write(buffer.toUtf8());
+            file.close();
+        }
+    }
+}
+
+
+void MainWindow::on_open_from_csv_triggered()
+{
+    //получаем путь для открытия файла
+    QString path;
+    path = QFileDialog::getOpenFileName(this, tr("Считать из txt"), QDir::currentPath(), tr("Text files (*.txt)"));
+    if (path.isEmpty())
+    {
+        QMessageBox::information(this, "Программа", "Файл открыть не удалось, не выбран путь");
+    }
+    else
+    {
+        QFile file;
+        file.setFileName(path);
+        file.open(QIODevice::ReadOnly);
+        if (not file.isOpen())
+        {
+            QMessageBox::information(this, "Программа", "Не удалось открыть файл, возможно нехватка прав доступа");
+            return;
+        }
+        else
+        {
+            //файл открыт, начинаем считывание
+            QString buffer; //буфер для считывания
+            QStringList strings;
+            bool isInt; //является ли буферный элемент числом
+            int fromFileSize; //размер таблицы открытого файла
+
+            //считываем размер таблицы
+            buffer = file.readLine();
+            strings = buffer.split(";");
+
+            if (strings.length() <= 1)
+            {
+                QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён"));
+                return;
+            }
+            else
+            {
+                fromFileSize = strings[0].toInt(&isInt);
+            }
+            if (not isInt) //если размер не валиден
+            {
+                QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён: размер таблицы не валиден"));
+                return;
+            }
+            else if (fromFileSize <= 0 or fromFileSize > this->MAX_ARRAY_SIZE)
+            {
+                QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён: ") +  + "размер таблицы должен быть в диапазоне [1, " + QString::number(this->MAX_ARRAY_SIZE) + "]");
+                return;
+            }
+            else
+            {
+                //создаём времменный массив для считанных чисел
+                strings = strings[1].split(",");
+                if (strings.length() != fromFileSize)
+                {
+                    QMessageBox::information(this, "Программа", QString("Размер таблицы не соответствует количеству элементов, заявлено ") + QString::number(fromFileSize) + " Обнаружено " + QString::number(strings.length()));
+                    return;
+                }
+                int *fromFileArray = new int[fromFileSize];
+                for (int i = 0; i < fromFileSize; i++)
+                {
+                    //построчно записываем данные в массив
+                    buffer = strings[i];
+                    fromFileArray[i] = buffer.toInt(&isInt);
+                    if (not isInt) //буферный элемент не валиден
+                    {
+                        QMessageBox::information(
+                                    this, \
+                                    "Программа", \
+                                    QString("Ошибка, файл повреждён в столбце ") + \
+                                    QString::number(i + 2) + \
+                                    ": " + buffer + "\n" + \
+                                    "Считано элементов:" + QString::number(i) + \
+                                    " Необходимо считать: " + QString::number(fromFileSize)
                         );
                         delete [] fromFileArray;
                         return;

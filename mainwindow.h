@@ -74,6 +74,10 @@ private slots:
 
     void on_open_from_txt_triggered();
 
+    void on_save_to_scv_triggered();
+
+    void on_open_from_csv_triggered();
+
 private:
     Ui::MainWindow *ui;
     const int MAX_ARRAY_SIZE = 1000000;
