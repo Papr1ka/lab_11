@@ -625,6 +625,11 @@
     <property name="title">
      <string>Сортировки</string>
     </property>
+    <addaction name="open_from_txt"/>
+    <addaction name="open_from_binary"/>
+    <addaction name="separator"/>
+    <addaction name="save_to_txt"/>
+    <addaction name="save_to_binary"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -637,6 +642,26 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="open_from_txt">
+   <property name="text">
+    <string>Открыть текстовик</string>
+   </property>
+  </action>
+  <action name="open_from_binary">
+   <property name="text">
+    <string>Открыть бинарник</string>
+   </property>
+  </action>
+  <action name="save_to_txt">
+   <property name="text">
+    <string>Сохранить текстовик</string>
+   </property>
+  </action>
+  <action name="save_to_binary">
+   <property name="text">
+    <string>Сохранить бинарник</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

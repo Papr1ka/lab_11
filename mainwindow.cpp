@@ -953,3 +953,133 @@ void MainWindow::on_tableWidget_itemSelectionChanged()
     }
 }
 
+
+void MainWindow::on_save_to_txt_triggered()
+{
+    if (this->check() && this->check_numbers())
+    {
+        QString path;
+        path = QFileDialog::getSaveFileName(this, tr("Сохранить как"), QDir::currentPath(), tr("Text files (*.txt)"));
+
+        if (path.isEmpty())
+        {
+            QMessageBox::information(this, "Программа", "Ошибка, путь для сохранения файла не выбран");
+        }
+        else
+        {
+            QFile file;
+            file.setFileName(path);
+            file.open(QIODevice::WriteOnly);
+            if (not file.isOpen())
+            {
+                QMessageBox::information(this, "Программа", "Ошибка, файл сохранить не удалось, возможно нехватка прав доступа");
+                return;
+            }
+
+            QString buffer;
+            buffer.setNum(this->size);
+            buffer += "\n";
+            file.write(buffer.toUtf8());
+
+            for (int i = 0; i < this->size; i++)
+            {
+                buffer.setNum(this->array[i]);
+                buffer += "\n";
+                file.write(buffer.toUtf8());
+            }
+            file.close();
+        }
+    }
+}
+
+
+bool MainWindow::check_numbers_file(QFile *file)
+{
+    QString buffer;
+    bool isInt;
+    int number_buffer;
+    buffer = file->readLine();
+    buffer.remove("\n");
+    int fronFileSize = buffer.toInt(&isInt);
+    if (not isInt)
+    {
+        return false;
+    }
+    else
+    {
+        int *fromFileArray = new int[fronFileSize];
+
+        for (int i = 0; i < size; i++)
+        {
+            buffer = file->readLine();
+            buffer.remove("\n");
+            number_buffer = buffer.toInt(&isInt);
+            if (not isInt)
+            {
+                delete [] fromFileArray;
+                return false;
+            }
+            else
+            {
+                fromFileArray[i] = number_buffer;
+            }
+        }
+        delete [] this->array;
+        this->array = fromFileArray;
+        return true;
+    }
+}
+
+void MainWindow::on_open_from_txt_triggered()
+{
+    QString path;
+    path = QFileDialog::getOpenFileName(this, tr("Считать из txt"), QDir::currentPath(), tr("Text files (*.txt)"));
+    if (path.isEmpty())
+    {
+        QMessageBox::information(this, "Программа", "Файл открыть не удалось, не выбран путь");
+    }
+    else
+    {
+        QFile *file = new QFile;
+        file->setFileName(path);
+        file->open(QIODevice::ReadOnly);
+        if (not file->isOpen())
+        {
+            QMessageBox::information(this, "Программа", "Не удалось открыть файл, возможно нехватка прав доступа");
+            delete file;
+            return;
+        }
+        else
+        {
+            QString buffer;
+            QByteArray byteArray;
+            bool isInt;
+            buffer = file->readLine();
+            buffer.remove("\n");
+            int size = buffer.toInt(&isInt);
+            if (not isInt)
+            {
+                QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer);
+                delete file;
+                return;
+            }
+            else{
+                this->setTable(size);
+                ui->tableWidget->setUpdatesEnabled(false);
+                for (int i = 0; i < size; i++)
+                {
+                    buffer = file->readLine();
+                    buffer.remove("\n");
+                    int size = buffer.toInt(&isInt);
+                    if (not isInt)
+                    {
+                        QMessageBox::information(this, "Программа", QString("Ошибка, файл повреждён в строке 1: ") + buffer);
+                        return;
+                    }
+                    ui->tableWidget->item(0, i)->setText()
+                }
+            }
+        }
+    }
+}
+
